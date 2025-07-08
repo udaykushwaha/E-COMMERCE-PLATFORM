@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# VSCode settings
+.vscode/
+
+# React frontend (if later added)
+frontend/node_modules/
+frontend/build/
