@@ -1,6 +1,6 @@
-const Cart = require("../backend/models/Cart");
+const Cart = require("../models/Cart");
 
-// Add to Cart
+// ✅ Add to Cart
 exports.addToCart = async (req, res) => {
   const { productId, quantity } = req.body;
 
@@ -8,38 +8,45 @@ exports.addToCart = async (req, res) => {
     let cart = await Cart.findOne({ user: req.user._id });
 
     if (cart) {
-      // Product already in cart
+      // 🔁 Check if product already in cart
       const index = cart.items.findIndex(item => item.product.toString() === productId);
 
       if (index > -1) {
+        // 🆙 Increase quantity
         cart.items[index].quantity += quantity;
       } else {
+        // ➕ Add new product
         cart.items.push({ product: productId, quantity });
       }
 
-      cart = await cart.save();
-      res.status(200).json(cart);
+      await cart.save();
+      return res.status(200).json({ message: "Cart updated", cart });
     } else {
-      // New cart for user
+      // 🛒 Create new cart for user
       const newCart = new Cart({
         user: req.user._id,
         items: [{ product: productId, quantity }],
       });
 
       await newCart.save();
-      res.status(201).json(newCart);
+      return res.status(201).json({ message: "Cart created", cart: newCart });
     }
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message || "Failed to update cart" });
   }
 };
 
-// Get User's Cart
+// ✅ Get Current User's Cart
 exports.getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
-    res.json(cart || { items: [] });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(200).json({ items: [] }); // empty cart
+    }
+
+    res.status(200).json(cart);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message || "Failed to fetch cart" });
   }
 };

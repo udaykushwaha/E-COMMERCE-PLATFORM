@@ -1,24 +1,25 @@
-const Order = require("../backend/models/Order");
-const Cart = require("../backend/models/Cart");
+const Order = require("../models/Order");
+const Cart = require("../models/Cart");
 
+// ✅ Checkout Controller
 exports.checkout = async (req, res) => {
   try {
-    // Get user's cart
+    // 📦 Get the user's cart
     const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
 
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
+      return res.status(400).json({ message: "🛒 Your cart is empty" });
     }
 
-    // Calculate total price
-    const totalPrice = cart.items.reduce((total, item) => {
-      return total + item.product.price * item.quantity;
+    // 💰 Calculate total price
+    const totalPrice = cart.items.reduce((sum, item) => {
+      return sum + item.product.price * item.quantity;
     }, 0);
 
-    // Create new order
+    // 🧾 Create new order
     const order = new Order({
       user: req.user._id,
-      items: cart.items.map((item) => ({
+      items: cart.items.map(item => ({
         product: item.product._id,
         quantity: item.quantity,
       })),
@@ -29,12 +30,12 @@ exports.checkout = async (req, res) => {
 
     await order.save();
 
-    // Clear cart after checkout
+    // ♻️ Clear cart after order is placed
     cart.items = [];
     await cart.save();
 
-    res.status(201).json({ message: "Order placed successfully", order });
+    res.status(201).json({ message: "✅ Order placed successfully", order });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message || "Checkout failed" });
   }
 };
